@@ -1,0 +1,187 @@
+import sys
+
+import os.path
+
+import urllib2
+from cookielib import MozillaCookieJar
+
+import optparse
+import ConfigParser
+
+from getpass import getpass
+
+import lxml.etree as ET
+
+from nraouserdb import NRAOUserDB, TryAuthenticating
+
+
+CONFIG_FILE = '~/.nraouserdbrc'
+
+def first(seq):
+    for x in seq:
+	return x
+
+class Symbol(object):
+    _registry = {}
+    def __new__(cls, name):
+	if name not in cls._registry:
+	    cls._registry[name] = object.__new__(cls, name)
+	return cls._registry[name]
+
+    def __init__(self, name):
+	self.name = name
+    def __eq__(self, them):
+	if not isinstance(them, type(self)):
+	    them = Symbol(them)
+	return them is self
+    def __repr__(self):
+	return self.name
+
+    @classmethod
+    def lookup(cls, name):
+	return cls._registry[name]
+
+
+def main():
+    class UsageError(RuntimeError): pass
+
+    try:
+	GLOBAL_ID = Symbol('GLOBAL_ID')
+	DATABASE_ID = Symbol('DATABASE_ID')
+	ACCOUNT_NAME = Symbol('ACCOUNT_NAME')
+
+	parser = optparse.OptionParser()
+	parser.add_option('-L', '--location', dest='location',
+		help='location of the web service')
+	parser.add_option('-u', '--username', dest='username',
+		help='username to authenticate to the web service')
+	parser.add_option('-p', '--password', dest='password',
+		help='password to authenticate to the web service')
+	parser.add_option('-C', '--ca_certs', dest='ca_certs',
+		help='Cert/CA file to validate SSL connection against')
+	parser.add_option('-c', '--cookiejar', dest='cookiejar',
+		help='Cookie jar to store session information in')
+	parser.add_option('-G', '--globalid', dest='query_by',
+		action='store_const', const=GLOBAL_ID,
+		help='arguments are global ids (not implemented)')
+	parser.add_option('-I', '--databaseid', dest='query_by',
+		action='store_const', const=DATABASE_ID,
+		help='arguments are database ids')
+	parser.add_option('-A', '--accountname', dest='query_by',
+		action='store_const', const=ACCOUNT_NAME,
+		help='arguments are account names')
+	parser.add_option('--pretty', dest='pretty',
+		action='store_true', help='pretty print XML')
+
+	# Try to load a config file, and prime the option parser defaults with it
+	config = ConfigParser.ConfigParser()
+	config_file = os.path.expanduser(CONFIG_FILE)
+	try:
+	    fh = open(config_file)
+
+	except IOError:
+	    pass
+
+	else:
+	    config.readfp(fh, config_file)
+	    section = first(config.sections())
+	    getcf = lambda k, default=None: config.get(section, k) if config.has_option(section, k) else default
+	    parser.set_defaults(
+		location=getcf('location'),
+		username=getcf('username'),
+		password=getcf('password', getpass),
+		ca_certs=getcf('ca_certs'),
+		cookiejar=getcf('cookiejar'),
+		query_by=getcf('query_by'),
+	    )
+
+	options, args = parser.parse_args()
+
+	if not options.location:
+	    # That's a dealbreaker!
+	    raise UsageError('specify the location of the web service to query')
+
+	# Don't use the validating https handler unless it is configured.  This
+	# way it won't abort unless the user has configured it.
+	https_handler = urllib2.HTTPSHandler
+	if options.ca_certs:
+	    from caslib.validating_https import ValidatingHTTPSConnection
+	    class HTTPSConnection(ValidatingHTTPSConnection):
+		ca_certs = options.ca_certs
+	    https_handler = HTTPSConnection.HTTPSHandler
+
+	opener = urllib2.build_opener(https_handler)
+
+	if options.cookiejar:
+	    cookiejar = MozillaCookieJar(os.path.expanduser(options.cookiejar))
+	    try:
+		cookiejar.load(ignore_discard=True)
+	    except IOError:
+		pass
+	    opener.add_handler(urllib2.HTTPCookieProcessor(cookiejar=cookiejar))
+
+	userdb = NRAOUserDB(options.location, options.username, options.password, opener)
+
+	for key in args:
+	    if options.query_by == DATABASE_ID:
+		user = userdb.get_user_data(database_id=key)
+
+	    elif options.query_by == ACCOUNT_NAME:
+		user = userdb.get_user_data(username=key)
+
+	    elif options.query_by == GLOBAL_ID:
+		raise NotImplementedError('Query by global id?  That\'s unpossible!')
+
+	    else:
+		raise UsageError('No such query type exists: %r' % options.query_by)
+
+	    if options.pretty:
+		# Strip out extra whitespace, so we can have maximum prettiness.
+		for el in user.iter():
+		    if el.text and not el.text.strip():
+			el.text = None
+		    if el.tail and not el.tail.strip():
+			el.tail = None
+		print ET.tostring(user, pretty_print=True, encoding=unicode)
+
+	    else:
+		print ET.tostring(user, encoding=unicode)
+
+	# FIXME: Add locking to cookiejar, so concurrent instances don't clobber the cookie file.
+	if options.cookiejar:
+	    try:
+		cookiejar.save(ignore_discard=True)
+	    except IOError, e:
+		print >>sys.stderr, 'Error while saving cookie jar: %s: %s' % ( options.cookiejar, e )
+
+    except UsageError, e:
+	print >>sys.stderr, e
+	return 64 # EX_USAGE
+
+    except ConfigParser.ParsingError, e:
+	print >>sys.stderr, e
+	return 78 # EX_CONFIG
+
+    except NotImplementedError, e:
+	print >>sys.stderr, e
+	return 69 # EX_UNAVAILABLE
+
+    except TryAuthenticating, e:
+	print >>sys.stderr, 'Authentication probably failed: ', e
+	return 77 # EX_NOPERM
+
+    except IOError, e:
+	if '_ssl.c' in str(e.reason) and 'error:00000000:lib(0):func(0):reason(0)' in str(e.reason):
+	    print >>sys.stderr, 'SSL error'
+	else:
+	    print >>sys.stderr, e
+	return 74 # EX_IOERR
+
+    except Exception, e:
+	print >>sys.stderr, 'Failure: %s: %s' % (e.__class__.__name__, e)
+	return 70 # EX_SOFTWARE
+
+
+if __name__ == '__main__':
+    sys.exit(main())
+
