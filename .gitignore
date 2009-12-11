@@ -5,3 +5,6 @@
 
 .*.sw?
 *~
+
+dist/
+build/
