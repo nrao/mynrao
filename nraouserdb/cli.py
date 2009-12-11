@@ -1,6 +1,9 @@
 import sys
 
 import os.path
+import errno
+
+import copy
 
 import urllib2
 from cookielib import MozillaCookieJar
@@ -45,47 +48,84 @@ class Symbol(object):
 def main():
     class UsageError(RuntimeError): pass
 
+    def preparse_args_dumbly(parser):
+	'''Configure and run an option parser in a no side-effects mode.'''
+
+	preparser = copy.copy(parser)
+
+	preparser.print_usage = lambda file=None: None
+	preparser.print_version = lambda file=None: None
+	preparser.print_help = lambda file=None: None
+	# Overriding OptionParser.error with a function that returns is forbidden.
+	# But... this works, and it probably isn't going to change.
+	preparser.error = lambda msg: None
+	# I suppose it doesn't need to be said OptionParser.exit that making
+	# OptionParser.exit return is probably forbidden.  But, I'm saying it
+	# anyway and I'm violating that rule too.  HAH!
+	preparser.exit = lambda code=0, msg=None: None
+
+	return preparser.parse_args()
+
+
     try:
 	GLOBAL_ID = Symbol('GLOBAL_ID')
 	DATABASE_ID = Symbol('DATABASE_ID')
 	ACCOUNT_NAME = Symbol('ACCOUNT_NAME')
 
 	parser = optparse.OptionParser()
+	parser.add_option('-f', '--file', dest='config',
+		help='Load configuration from CONFIG[#SECTION] (%s)' % CONFIG_FILE)
 	parser.add_option('-L', '--location', dest='location',
-		help='location of the web service')
+		help='The location of the query filter web service (%default)')
 	parser.add_option('-u', '--username', dest='username',
-		help='username to authenticate to the web service')
+		help='Username to authenticate to the web service (%default)')
 	parser.add_option('-p', '--password', dest='password',
-		help='password to authenticate to the web service')
+		help='Password to authenticate to the web service')
 	parser.add_option('-C', '--ca_certs', dest='ca_certs',
-		help='Cert/CA file to validate SSL connection against')
+		help='Cert/CA file to validate SSL connection against (%default)')
 	parser.add_option('-c', '--cookiejar', dest='cookiejar',
-		help='Cookie jar to store session information in')
+		help='Cookie jar to store session information in (%default)')
 	parser.add_option('-G', '--globalid', dest='query_by',
 		action='store_const', const=GLOBAL_ID,
-		help='arguments are global ids (not implemented)')
+		help='Arguments are global-ids (not implemented)')
 	parser.add_option('-I', '--databaseid', dest='query_by',
 		action='store_const', const=DATABASE_ID,
-		help='arguments are database ids')
+		help='Arguments are database-ids')
 	parser.add_option('-A', '--accountname', dest='query_by',
 		action='store_const', const=ACCOUNT_NAME,
-		help='arguments are account names')
+		help='Arguments are account-names')
 	parser.add_option('--pretty', dest='pretty',
-		action='store_true', help='pretty print XML')
+		action='store_true', help='Pretty print XML')
 
-	# Try to load a config file, and prime the option parser defaults with it
-	config = ConfigParser.ConfigParser()
-	config_file = os.path.expanduser(CONFIG_FILE)
+	options, args = preparse_args_dumbly(parser)
+	user_config_file = options.config
+
+	# Load the user's config file or a default.
+	if user_config_file is not None:
+	    config_file,_,section = user_config_file.partition('#')
+	else:
+	    config_file,_,section = CONFIG_FILE.partition('#')
+	config_file = os.path.expanduser(config_file)
+
 	try:
 	    fh = open(config_file)
 
-	except IOError:
-	    pass
+	except IOError, e:
+	    # If the user did not specify a config file and it doesn't exist, that's ok.
+	    if user_config_file is None and e.errno == errno.ENOENT:
+		pass
+
+	    else:
+		raise
 
 	else:
-	    config.readfp(fh, config_file)
-	    section = first(config.sections())
-	    getcf = lambda k, default=None: config.get(section, k) if config.has_option(section, k) else default
+	    config = ConfigParser.ConfigParser()
+	    config.read(config_file)
+
+	    if not section:
+		section = first(config.sections())
+
+	    getcf = lambda k, default=None: config.has_option(section, k) and config.get(section, k) or default
 	    parser.set_defaults(
 		location=getcf('location'),
 		username=getcf('username'),
@@ -171,15 +211,15 @@ def main():
 	return 77 # EX_NOPERM
 
     except IOError, e:
-	if '_ssl.c' in str(e.reason) and 'error:00000000:lib(0):func(0):reason(0)' in str(e.reason):
+	if isinstance(e, urllib2.URLError) and '_ssl.c' in str(e.reason) and 'error:00000000:lib(0):func(0):reason(0)' in str(e.reason):
 	    print >>sys.stderr, 'SSL error'
 	else:
 	    print >>sys.stderr, e
 	return 74 # EX_IOERR
 
-    except Exception, e:
-	print >>sys.stderr, 'Failure: %s: %s' % (e.__class__.__name__, e)
-	return 70 # EX_SOFTWARE
+    #except Exception, e:
+	#print >>sys.stderr, 'Failure: %s: %s' % (e.__class__.__name__, e)
+	#return 70 # EX_SOFTWARE
 
 
 if __name__ == '__main__':

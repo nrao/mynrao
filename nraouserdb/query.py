@@ -13,7 +13,6 @@ import new
 import lxml.etree as ET
 
 from caslib import login_to_cas_service, CASLoginError
-from caslib.validating_https import ValidatingHTTPSConnection
 
 
 _log = logging.getLogger(__name__)
