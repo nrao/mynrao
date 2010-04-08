@@ -71,6 +71,7 @@ def main():
 	GLOBAL_ID = Symbol('GLOBAL_ID')
 	DATABASE_ID = Symbol('DATABASE_ID')
 	ACCOUNT_NAME = Symbol('ACCOUNT_NAME')
+	EMAIL_ADDRESS = Symbol('EMAIL_ADDRESS')
 
 	parser = optparse.OptionParser()
 	parser.add_option('-f', '--file', dest='config',
@@ -94,6 +95,9 @@ def main():
 	parser.add_option('-A', '--accountname', dest='query_by',
 		action='store_const', const=ACCOUNT_NAME,
 		help='Arguments are account-names')
+	parser.add_option('-E', '--email', dest='query_by',
+		action='store_const', const=EMAIL_ADDRESS,
+		help='Arguments are email addresses')
 	parser.add_option('--pretty', dest='pretty',
 		action='store_true', help='Pretty print XML')
 
@@ -169,11 +173,18 @@ def main():
 	    elif options.query_by == ACCOUNT_NAME:
 		user = userdb.get_user_data(username=key)
 
+	    elif options.query_by == EMAIL_ADDRESS:
+		user = userdb.get_user_data(email=key)
+
 	    elif options.query_by == GLOBAL_ID:
-		raise NotImplementedError('Query by global id?  That\'s unpossible!')
+		user = userdb.get_user_data(global_id=key)
 
 	    else:
 		raise UsageError('No such query type exists: %r' % options.query_by)
+
+	    if user is None:
+		print >>sys.stderr, "%s: no record found" % key;
+		continue
 
 	    if options.pretty:
 		# Strip out extra whitespace, so we can have maximum prettiness.

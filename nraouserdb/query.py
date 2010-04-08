@@ -102,12 +102,16 @@ class NRAOUserDB(object):
 	return query_result.find(nrao.user)
 
 
-    def get_user_data(self, username=None, database_id=None):
+    def get_user_data(self, username=None, email=None, global_id=None, database_id=None):
         '''Try to retrieve user profile information for a user'''
 
         scheme, host, path, params, query, fragment = urlparse(self.url)
         if username:
             query = urlencode([('userByAccountNameEquals', username)], True)
+	elif email:
+            query = urlencode([('userByEmailAddressEquals', email)], True)
+        elif global_id:
+            query = urlencode([('userByGlobalId', global_id)], True)
         elif database_id:
             query = urlencode([('userById', database_id)], True)
         else:
