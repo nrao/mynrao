@@ -193,10 +193,10 @@ def main():
 			el.text = None
 		    if el.tail and not el.tail.strip():
 			el.tail = None
-		print ET.tostring(user, pretty_print=True, encoding=unicode)
+		print ET.tostring(user, pretty_print=True, encoding='utf-8')
 
 	    else:
-		print ET.tostring(user, encoding=unicode)
+		print ET.tostring(user, encoding='utf-8')
 
 	# FIXME: Add locking to cookiejar, so concurrent instances don't clobber the cookie file.
 	if options.cookiejar:
