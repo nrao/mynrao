@@ -22,6 +22,10 @@ setup(name='nraouserdb',
 	  'lxml>=2.2,<2.3a1',
 	  'caslib>=0.3.1,<0.4a1',
       ],
+      tests_require=[
+          'nose',
+      ],
+      test_suite='nose.collector',
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]
