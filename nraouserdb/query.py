@@ -19,7 +19,23 @@ _log = logging.getLogger(__name__)
 
 
 class XMLNS(object):
-    '''Utility class to generate xml names using clark notation'''
+    '''Utility class to generate xml names using clark notation
+
+    >>> example = XMLNS('http://www.example.com/example')
+    >>> example['user']
+    '{http://www.example.com/example}user'
+    >>> example.user
+    '{http://www.example.com/example}user'
+    >>> example.test
+    '{http://www.example.com/example}test'
+
+    Attributes are still accessible:
+    >>> example.ns
+    'http://www.example.com/example'
+    >>> example.__init__ # doctest: +ELLIPSIS
+    <bound method XMLNS.__init__ ...>
+    >>>
+    '''
 
     def __init__(self, ns=None):
         self.ns = ns
