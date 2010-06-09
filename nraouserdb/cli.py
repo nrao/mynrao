@@ -23,6 +23,17 @@ from nraouserdb import NRAOUserDB, TryAuthenticating
 CONFIG_FILE = '~/.nraouserdbrc'
 
 def first(seq):
+    '''Return the head element of the sequence.
+
+    >>> first([0, 1, 2, 3])
+    0
+    >>> first((7, 8, 9))
+    7
+    >>> first({0: 'zero', 1: 'one'})
+    0
+    >>> first([])
+    >>>
+    '''
     for x in seq:
 	return x
 

@@ -1,10 +1,8 @@
 *.pyc
 *.pyo
-
-*.egg-info
-
 .*.sw?
 *~
-
 dist/
 build/
+*.egg
+*.egg-info

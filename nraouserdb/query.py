@@ -56,7 +56,19 @@ nrao = XMLNS('http://www.nrao.edu/namespaces/nrao')
 
 
 class TryAuthenticating(RuntimeError):
-    '''Perhaps you should try logging in?  Mmmm?'''
+    '''Perhaps you should try logging in?  Mmmm?
+
+    >>> url = 'http://example.com/login'
+    >>> raise TryAuthenticating(url, 'Log in first.')
+    Traceback (most recent call last):
+    TryAuthenticating: Log in first.
+    >>> try:
+    ...     raise TryAuthenticating(url, 'Log in first.')
+    ... except TryAuthenticating, e:
+    ...     e.login_url
+    'http://example.com/login'
+    >>>
+    '''
 
     login_url = None
     '''The last url retrieved'''
@@ -69,7 +81,7 @@ class TryAuthenticating(RuntimeError):
 class NRAOUserDB(object):
 
     def __init__(self, url, username=None, password=None, opener=None):
-        '''
+        '''Create a NRAOUserDB object.
 
         :param url:             Location of the QueryFilter service
         :param username:        Account that may query the user database
@@ -158,5 +170,4 @@ class NRAOUserDB(object):
 
         if user_data is not None: # FutureWarning says test for None
             return user_data
-
 
