@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.3'
+version = '0.3.1'
 
 setup(name='nraouserdb',
       version=version,
@@ -19,8 +19,8 @@ setup(name='nraouserdb',
       zip_safe=False,
       install_requires=[
           # -*- Extra requirements: -*-
-	  'lxml>=2.2,<2.3b1',
-	  'caslib>=0.3,<0.4b1',
+	  'lxml>=2.2,<2.3a1',
+	  'caslib>=0.3.1,<0.4a1',
       ],
       entry_points="""
       # -*- Entry points: -*-
