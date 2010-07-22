@@ -3,6 +3,8 @@ import sys
 import os.path
 import errno
 
+import logging
+
 import copy
 
 import urllib2
@@ -74,6 +76,8 @@ def main():
 	EMAIL_ADDRESS = Symbol('EMAIL_ADDRESS')
 
 	parser = optparse.OptionParser()
+        parser.add_option('-v', '--verbose', dest='verbose', action='count',
+                help='Be verbose(r)')
 	parser.add_option('-f', '--file', dest='config',
 		help='Load configuration from CONFIG[#SECTION] (%s)' % CONFIG_FILE)
 	parser.add_option('-L', '--location', dest='location',
@@ -168,6 +172,12 @@ def main():
 		pass
 	    opener.add_handler(urllib2.HTTPCookieProcessor(cookiejar=cookiejar))
 
+        if not options.verbose:
+            logging.basicConfig(level=logging.WARNING)
+        elif options.verbose == 1:
+            logging.basicConfig(level=logging.INFO)
+        else:
+            logging.basicConfig(level=logging.DEBUG)
 	userdb = NRAOUserDB(options.location, options.username, options.password, opener)
 
 	for key in args:
