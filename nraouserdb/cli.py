@@ -80,7 +80,7 @@ def main():
 		help='The location of the query filter web service (%default)')
 	parser.add_option('-u', '--username', dest='username',
 		help='Username to authenticate to the web service (%default)')
-	parser.add_option('-p', '--password', dest='password',
+	parser.add_option('-p', '--password', dest='password', default=getpass,
 		help='Password to authenticate to the web service')
 	parser.add_option('-C', '--ca_certs', dest='ca_certs',
 		help='Cert/CA file to validate SSL connection against (%default)')
