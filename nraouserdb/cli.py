@@ -106,9 +106,13 @@ def main():
 
 	# Load the user's config file or a default.
 	if user_config_file is not None:
-	    config_file,_,section = user_config_file.partition('#')
+	    config_file = user_config_file
 	else:
-	    config_file,_,section = CONFIG_FILE.partition('#')
+	    config_file = CONFIG_FILE
+        if '#' in config_file:
+            config_file, section = config_file.split('#', 1)
+        else:
+            section = None
 	config_file = os.path.expanduser(config_file)
 
 	try:

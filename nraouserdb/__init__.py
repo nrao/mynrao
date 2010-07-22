@@ -1,1 +1,1 @@
-from .query import NRAOUserDB, TryAuthenticating
+from nraouserdb.query import NRAOUserDB, TryAuthenticating
