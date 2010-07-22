@@ -46,7 +46,7 @@ class TryAuthenticating(RuntimeError):
     '''The last url retrieved'''
 
     def __init__(self, login_url, *args):
-        super(TryAuthenticating, self).__init__(*args)
+        RuntimeError.__init__(self, *args)
         self.login_url = login_url
 
 
