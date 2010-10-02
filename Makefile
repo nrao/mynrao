@@ -2,13 +2,17 @@
 
 all: build test
 
+develop:
+	pip install nose minimock
+	python setup.py develop
+
 build:
 	python setup.py build
 
 install:
 	python setup.py install
 
-test:
+test: develop
 	python setup.py nosetests
 
 clean:

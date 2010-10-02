@@ -24,6 +24,7 @@ setup(name='nraouserdb',
       ],
       tests_require=[
           'nose',
+          'minimock',
       ],
       test_suite='nose.collector',
       entry_points="""
