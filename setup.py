@@ -3,7 +3,7 @@ import sys, os
 
 version = '0.4-dev'
 
-setup(name='nraouserdb',
+setup(name='mynrao',
       version=version,
       description="Retrieve profiles from the NRAO user database.",
       long_description="""\
@@ -12,7 +12,7 @@ setup(name='nraouserdb',
       keywords='',
       author='Kai Groner',
       author_email='kgroner@nrao.edu',
-      url='',
+      url='http://github.com/nrao/mynrao',
       license='',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       include_package_data=True,
@@ -30,6 +30,6 @@ setup(name='nraouserdb',
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]
-      nraouserdb-query = nraouserdb.cli:main
+      mynrao = mynrao.cli:main
       """,
       )

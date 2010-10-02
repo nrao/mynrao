@@ -17,10 +17,10 @@ from getpass import getpass
 
 import lxml.etree as ET
 
-from nraouserdb import NRAOUserDB, TryAuthenticating
+from mynrao import NRAOUserDB, TryAuthenticating
 
 
-CONFIG_FILE = '~/.nraouserdbrc'
+CONFIG_FILE = '~/.mynraorc'
 
 def first(seq):
     '''Return the head element of the sequence.

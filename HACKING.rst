@@ -1,11 +1,11 @@
-=============================================
- Hacking on nraouserdb: a guide to internals
-=============================================
+=========================================
+ Hacking on mynrao: a guide to internals
+=========================================
 
 Summary
 =======
 
-nraouserdb requests user information from the NRAO user database server, using
+mynrao requests user information from the NRAO user database server, using
 caslib to perform the required authentication against the NRAO CAS server.
 
 >>> from minimock import Mock, mock
@@ -66,11 +66,11 @@ NRAOUserDB
 ... '''
 
 
->>> import nraouserdb.query
->>> from nraouserdb.query import NRAOUserDB
+>>> import mynrao.query
+>>> from mynrao.query import NRAOUserDB
 >>> from caslib import login_to_cas_service
 >>> login_to_cas_service = Mock('caslib.login_to_cas_service')
->>> nraouserdb.query.login_to_cas_service = login_to_cas_service
+>>> mynrao.query.login_to_cas_service = login_to_cas_service
 >>> url = 'http://example.org/query'
 >>> opener = Mock('urllib2.OpenerDirector')
 >>> opened = Mock('urllib.addinfourl')
@@ -79,11 +79,6 @@ NRAOUserDB
 >>> opened.read.mock_returns = '<?xml version="1.0" encoding="UTF-8"?>\n'
 >>> opener.open.mock_returns = opened
 >>> userdb = NRAOUserDB(url, 'db-user', 'db-password', opener)
->>> userdb.get_user_data(username='username')
-Called urllib2.OpenerDirector.open(
-    'http://example.org/query?userByAccountNameEquals=username')
-Called urllib.addinfourl.read(16384)
->>>
 >>> opened.read.mock_returns = 'Please login...\n'
 >>> userdb.get_user_data(username='username')
 Traceback (most recent call last):
